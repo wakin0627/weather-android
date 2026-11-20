@@ -66,6 +66,13 @@ data class WeatherBundle(
     val updated: Long
 )
 
+data class CityHit(
+    val name: String,
+    val sub: String,
+    val lng: Double,
+    val lat: Double
+)
+
 /* ---------------- 网络 ---------------- */
 
 object Api {
@@ -99,6 +106,35 @@ object Api {
             JSONObject(text)
         } catch (e: Exception) {
             JSONObject().put("ok", false).put("error", e.message ?: "网络异常")
+        }
+    }
+
+    /** 逆地理：坐标 -> 城市名（用于定位后命名） */
+    suspend fun reverse(lng: Double, lat: Double): City? = withContext(Dispatchers.IO) {
+        val o = get("/api/where?lng=$lng&lat=$lat")
+        if (!o.optBoolean("ok", false)) return@withContext null
+        val name = o.optString("city").replace("市", "").ifEmpty { "当前位置" }
+        val district = o.optString("district")
+        val township = o.optString("township")
+        val sub = listOf(district, township).filter { it.isNotEmpty() }.joinToString(" · ")
+        City(name, lng, lat, sub, located = true)
+    }
+
+    suspend fun search(q: String): List<CityHit> = withContext(Dispatchers.IO) {
+        val o = get("/api/search?q=" + java.net.URLEncoder.encode(q, "UTF-8") + "&limit=10")
+        if (!o.optBoolean("ok", false)) return@withContext emptyList()
+        val arr = o.optJSONArray("items") ?: return@withContext emptyList()
+        (0 until arr.length()).map { i ->
+            val it = arr.getJSONObject(i)
+            val cityName = it.optString("cityname").replace("市", "")
+            val district = it.optString("district")
+            val sub = listOf(cityName, district).filter { s -> s.isNotEmpty() }.distinct().joinToString(" · ")
+            CityHit(
+                name = it.optString("name"),
+                sub = sub.ifEmpty { it.optString("address") },
+                lng = it.optDouble("lng"),
+                lat = it.optDouble("lat")
+            )
         }
     }
 

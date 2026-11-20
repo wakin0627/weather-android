@@ -51,6 +51,7 @@ fun Pill(text: String, onClick: () -> Unit) {
     }
 }
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun WeatherScreen(
     data: WeatherBundle?,
@@ -58,7 +59,9 @@ fun WeatherScreen(
     error: String?,
     onRefresh: () -> Unit,
     onOpenDays: () -> Unit,
-    onToast: (String) -> Unit
+    onToast: (String) -> Unit,
+    cityName: String = "",
+    onOpenCity: () -> Unit = {}
 ) {
     val now = data?.now
     val group = now?.group ?: "cloudy"
@@ -79,6 +82,24 @@ fun WeatherScreen(
                 )
         )
 
+        val pullState = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState()
+        androidx.compose.material3.pulltorefresh.PullToRefreshBox(
+            isRefreshing = loading,
+            onRefresh = onRefresh,
+            state = pullState,
+            modifier = Modifier.fillMaxSize(),
+            indicator = {
+                androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator(
+                    state = pullState,
+                    isRefreshing = loading,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 54.dp),
+                    containerColor = Color(0xCC15202B),
+                    color = Color.White
+                )
+            }
+        ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 44.dp, bottom = 96.dp),
@@ -90,7 +111,7 @@ fun WeatherScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Pill("城市") { onToast("多城市管理将在正式版开放") }
+                    Pill(if (cityName.isBlank()) "城市" else cityName) { onOpenCity() }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             now?.time?.takeLast(5) ?: "--:--",
@@ -180,6 +201,7 @@ fun WeatherScreen(
                     }
                 }
             }
+        }
         }
     }
 }

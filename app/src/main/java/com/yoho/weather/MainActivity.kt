@@ -4,7 +4,11 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -34,8 +38,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 
-private const val DEMO_LNG = 120.1499
-private const val DEMO_LAT = 30.2850
+private val DEFAULT_CITY = City("杭州", 120.1499, 30.2850, "默认城市")
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,6 +73,12 @@ private fun App() {
     var reqCount by remember { mutableIntStateOf(0) }
     var daysUsed by remember { mutableIntStateOf(1) }
 
+    // 城市与定位
+    var city by remember { mutableStateOf(CityStore.current(ctx) ?: DEFAULT_CITY) }
+    var locating by remember { mutableStateOf(false) }
+    var showCity by remember { mutableStateOf(false) }
+    var favCount by remember { mutableIntStateOf(CityStore.favorites(ctx).size) }
+
     // 应用内更新
     var release by remember { mutableStateOf<AppRelease?>(null) }
     var showUpdate by remember { mutableStateOf(false) }
@@ -83,7 +92,7 @@ private fun App() {
         if (loading) return
         loading = true
         scope.launch {
-            Api.load(DEMO_LNG, DEMO_LAT)
+            Api.load(city.lng, city.lat)
                 .onSuccess {
                     data = it
                     error = null
@@ -91,6 +100,37 @@ private fun App() {
                 }
                 .onFailure { error = it.message }
             loading = false
+        }
+    }
+
+    fun applyLocation(fromUser: Boolean) {
+        if (locating) return
+        locating = true
+        scope.launch {
+            val p = locateOnce(ctx)
+            locating = false
+            if (p == null) {
+                toast(if (fromUser) "定位失败，请确认系统定位已开启" else "没取到定位，先显示杭州")
+                if (fromUser) return@launch
+                refresh()
+                return@launch
+            }
+            val c = Api.reverse(p.first, p.second) ?: City("当前位置", p.first, p.second, "", true)
+            city = c
+            CityStore.setCurrent(ctx, c)
+            if (fromUser) toast("已定位到 ${c.name}")
+            refresh()
+        }
+    }
+
+    val permLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { res ->
+        if (res.values.any { it }) {
+            applyLocation(false)
+        } else {
+            toast("未授权定位，默认杭州；可在「城市」里手动选择")
+            refresh()
         }
     }
 
@@ -138,12 +178,23 @@ private fun App() {
     }
 
     LaunchedEffect(Unit) {
-        refresh()
+        val saved = CityStore.current(ctx)
+        if (saved == null) {
+            if (hasLocationPermission(ctx)) applyLocation(false)
+            else permLauncher.launch(LOCATION_PERMISSIONS)
+        } else if (saved.located && hasLocationPermission(ctx)) {
+            applyLocation(false)      // 跟随定位，静默更新
+        } else {
+            refresh()
+        }
         delay(2500)
         checkUpdate(false)
     }
 
+    val hazeState = remember { HazeState() }
+
     Box(Modifier.fillMaxSize().background(Color(0xFF0A0F16))) {
+      Box(Modifier.fillMaxSize().hazeSource(hazeState)) {
         when (tab) {
             0 -> WeatherScreen(
                 data = data,
@@ -151,11 +202,13 @@ private fun App() {
                 error = error,
                 onRefresh = { refresh() },
                 onOpenDays = { if (data != null) showDays = true },
-                onToast = { toast(it) }
+                onToast = { toast(it) },
+                cityName = data?.place?.city?.ifEmpty { city.name } ?: city.name,
+                onOpenCity = { showCity = true }
             )
-            1 -> MapScreen(DEMO_LNG, DEMO_LAT)
+            1 -> androidx.compose.runtime.key(city.lng, city.lat) { MapScreen(city.lng, city.lat) }
             else -> MeScreen(
-                cityCount = 1,
+                cityCount = favCount,
                 days = daysUsed,
                 requests = reqCount,
                 nickname = nickname,
@@ -164,8 +217,28 @@ private fun App() {
                 onToast = { toast(it) }
             )
         }
+      }
 
-        BottomBar(tab) { tab = it }
+        Box(Modifier.align(Alignment.BottomCenter)) {
+            LiquidGlassBar(tab, hazeState) { tab = it }
+        }
+    }
+
+    if (showCity) {
+        CityPickerSheet(
+            current = city,
+            locating = locating,
+            onLocate = { applyLocation(true) },
+            onPick = { c ->
+                city = c
+                CityStore.setCurrent(ctx, c)
+                favCount = CityStore.favorites(ctx).size
+                showCity = false
+                refresh()
+            },
+            onDelete = { favCount = CityStore.favorites(ctx).size },
+            onDismiss = { showCity = false }
+        )
     }
 
     if (showDays && data != null) {
