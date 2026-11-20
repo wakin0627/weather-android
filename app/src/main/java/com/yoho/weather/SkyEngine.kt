@@ -66,23 +66,32 @@ float fbm(float2 p) {
 
 half4 main(float2 fragCoord) {
     float2 uv = fragCoord / uSize;
+    float aspect = uSize.x / max(uSize.y, 1.0);
 
     // 垂直渐变天空
     half3 sky = mix(half3(uTop), half3(uBottom), half(pow(uv.y, 0.9)));
 
-    // 太阳 / 月亮光晕（带轻微呼吸与漂移，晴天也有动静）
-    float2 sunPos = uSunPos + float2(sin(uTime * 0.045) * 0.006, cos(uTime * 0.037) * 0.004);
-    float d = distance(uv, sunPos);
-    float breath = 0.88 + 0.14 * sin(uTime * 0.055);
-    float glow = (0.34 * exp(-d * 11.0) + 0.11 * exp(-d * 3.6)) * breath;
-    sky += half3(uSun) * half(glow * (1.0 - uNight * 0.82));
+    // 柔和日照：宽衰减散射 + 地平线方向光 + 极淡光束，峰值压住不刺眼
+    float2 sunPos = uSunPos + float2(sin(uTime * 0.020) * 0.010, cos(uTime * 0.017) * 0.006);
+    float2 sunVec = (uv - sunPos) * float2(aspect, 1.0);
+    float d = length(sunVec);
+    float breath = 0.94 + 0.06 * sin(uTime * 0.030);
+    float broad = 0.17 * exp(-d * 1.9) + 0.07 * exp(-d * 0.9);
+    float sideGlow = pow(max(0.0, 1.0 - abs(uv.x - sunPos.x) * 1.15), 2.0) * (1.0 - uv.y) * 0.045;
+    float glow = min((broad + sideGlow) * breath, 0.34);
+    sky += half3(uSun) * half(glow * (1.0 - uNight * 0.85));
+
+    // 光束：用缓慢旋转的方向向量 + 点积，避免依赖 atan
+    float2 rayDir = float2(cos(uTime * 0.045), sin(uTime * 0.032));
+    float aligned = max(0.0, dot(normalize(sunVec + float2(1e-4)), rayDir));
+    float rays = pow(aligned, 5.0) * exp(-d * 1.6) * 0.07;
+    sky += half3(uSun) * half(rays * (1.0 - uNight));
 
     // 薄雾光带：晴天也保持缓慢流动
     float haze = fbm(float2(uv.x * 1.35 + uTime * 0.016, uv.y * 3.4 - uTime * 0.005));
-    sky += half3(1.0, 0.98, 0.95) * half(0.075 * smoothstep(0.32, 0.92, haze));
+    sky += half3(1.0, 0.98, 0.95) * half(0.055 * smoothstep(0.32, 0.92, haze));
 
     // 云层：两层噪声叠加出体积感
-    float aspect = uSize.x / max(uSize.y, 1.0);
     float2 p = float2(uv.x * aspect, uv.y) * 2.3;
     float2 drift = float2(uTime * 0.021, -uTime * 0.0045);
     float base = fbm(p + drift + fbm(p * 0.55 + uTime * 0.008) * 0.9);
@@ -90,7 +99,7 @@ half4 main(float2 fragCoord) {
     float c = smoothstep(lo, 0.98, base) * clamp(uCloud, 0.0, 1.0);
 
     half3 cloudColor = mix(half3(1.0), half3(0.62, 0.68, 0.78), half(uNight));
-    cloudColor = mix(cloudColor, half3(0.98, 0.95, 0.88), half(glow * 1.4));
+    cloudColor = mix(cloudColor, half3(0.99, 0.96, 0.90), half(glow * 1.2));
     sky = mix(sky, cloudColor, half(clamp(c * 0.9, 0.0, 0.92)));
 
     // 星空 + 月亮 + 城市灯光（夜间）
@@ -107,9 +116,9 @@ half4 main(float2 fragCoord) {
         sky += half3(star * 1.15);
 
         float md = length((uv - sunPos) * float2(aspect, 1.0));
-        float moonDisc = smoothstep(0.046, 0.036, md);
+        float moonDisc = smoothstep(0.030, 0.020, md);
         sky = mix(sky, half3(0.90, 0.92, 0.86), half(moonDisc * 0.92 * uNight));
-        sky += half3(0.42, 0.54, 0.80) * half(exp(-md * 6.0) * 0.32 * uNight);
+        sky += half3(0.32, 0.40, 0.62) * half(exp(-md * 3.2) * 0.15 * uNight);
 
         float cityGlow = exp(-pow((uv.y - 0.97) * 9.0, 2.0)) * uNight;
         sky += half3(1.0, 0.70, 0.40) * half(cityGlow * 0.14);
@@ -127,7 +136,7 @@ half4 main(float2 fragCoord) {
     float horizon = pow(uv.y, 0.7);
     half3 warmColor = half3(1.0, 0.46, 0.26);
     sky = mix(sky, warmColor, half(uWarm * horizon * 0.62 * (1.0 - uNight * 0.80)));
-    sky += half3(1.0, 0.62, 0.35) * half(uWarm * glow * 1.6);
+    sky += half3(1.0, 0.58, 0.32) * half(uWarm * glow * 0.55);
 
     // 暗角，让底部文字更稳
     float vig = smoothstep(0.15, 1.15, uv.y);
@@ -152,7 +161,11 @@ fun SkyEngineBackdrop(
     }
 
     val colors = skyColors(group, isDay)
-    val shaderOrNull = remember { runCatching { RuntimeShader(SKY_AGSL) }.getOrNull() }
+    val shaderOrNull = remember {
+        runCatching { RuntimeShader(SKY_AGSL) }
+            .onFailure { android.util.Log.w("SkyEngine", "AGSL 编译失败: ${it.message}") }
+            .getOrNull()
+    }
     if (shaderOrNull == null) {
         SkyBackdrop(group, isDay, cloud, windKmh)
         return
@@ -204,6 +217,7 @@ fun SkyEngineBackdrop(
             )
             drawRect(ShaderBrush(shader))
         } catch (e: Throwable) {
+            android.util.Log.w("SkyEngine", "AGSL 渲染失败，回退渐变: ${e.message}")
             drawRect(Brush.verticalGradient(skyColors(group, isDay)))
         }
     }

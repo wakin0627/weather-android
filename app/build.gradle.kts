@@ -21,8 +21,8 @@ android {
         applicationId = "com.yoho.weather"
         minSdk = 26
         targetSdk = 34
-        versionCode = 19
-        versionName = "0.10.0"
+        versionCode = 20
+        versionName = "0.10.1"
         buildConfigField("String", "API_BASE", "\"$apiBase\"")
     }
 
