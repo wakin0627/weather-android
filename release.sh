@@ -4,7 +4,7 @@
 set -euo pipefail
 
 OWNER="wakin0627"
-REPO="weather-app"
+REPO="weather-android"
 BRANCH="main"
 
 NOTES="${1:-}"

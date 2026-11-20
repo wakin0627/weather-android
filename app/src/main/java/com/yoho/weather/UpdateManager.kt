@@ -36,7 +36,7 @@ private fun httpGet(url: String, timeoutMs: Int = 12000, headers: Map<String, St
 
 /** 更新源：公开仓库的 Releases（版本清单 + 安装包都挂在这里） */
 private const val GH_OWNER = "wakin0627"
-private const val GH_REPO = "weather-app"
+private const val GH_REPO = "weather-android"
 
 /** 从 GitHub Releases 读最新版本；仓库不可达时返回 null */
 suspend fun checkGitHubRelease(): AppRelease? = withContext(Dispatchers.IO) {
