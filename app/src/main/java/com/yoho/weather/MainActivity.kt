@@ -222,23 +222,23 @@ private fun App() {
         Box(Modifier.align(Alignment.BottomCenter)) {
             LiquidGlassBar(tab, hazeState) { tab = it }
         }
-    }
 
-    if (showCity) {
-        CityPickerSheet(
-            current = city,
-            locating = locating,
-            onLocate = { applyLocation(true) },
-            onPick = { c ->
-                city = c
-                CityStore.setCurrent(ctx, c)
-                favCount = CityStore.favorites(ctx).size
-                showCity = false
-                refresh()
-            },
-            onDelete = { favCount = CityStore.favorites(ctx).size },
-            onDismiss = { showCity = false }
-        )
+        // Apple 天气式城市卡片列表（全屏覆盖）
+        if (showCity) {
+            CityCardsOverlay(
+                current = city,
+                locating = locating,
+                onLocate = { applyLocation(true) },
+                onPick = { c ->
+                    city = c
+                    CityStore.setCurrent(ctx, c)
+                    favCount = CityStore.favorites(ctx).size
+                    showCity = false
+                    refresh()
+                },
+                onClose = { showCity = false }
+            )
+        }
     }
 
     if (showDays && data != null) {

@@ -66,6 +66,17 @@ data class WeatherBundle(
     val updated: Long
 )
 
+data class CityCardInfo(
+    val temp: Int,
+    val text: String,
+    val icon: String,
+    val group: String,
+    val isDay: Boolean,
+    val hi: Int,
+    val lo: Int,
+    val pop: Int
+)
+
 data class CityHit(
     val name: String,
     val sub: String,
@@ -107,6 +118,24 @@ object Api {
         } catch (e: Exception) {
             JSONObject().put("ok", false).put("error", e.message ?: "网络异常")
         }
+    }
+
+    /** 轻量取一张城市卡片的数据（只打天气接口） */
+    suspend fun quickCard(lng: Double, lat: Double): CityCardInfo? = withContext(Dispatchers.IO) {
+        val wx = get("/api/weather?lng=$lng&lat=$lat")
+        if (!wx.optBoolean("ok", false)) return@withContext null
+        val n = wx.optJSONObject("now") ?: return@withContext null
+        val d0 = wx.optJSONArray("days")?.optJSONObject(0)
+        CityCardInfo(
+            temp = n.optInt("temp"),
+            text = n.optString("text"),
+            icon = n.optString("icon", "cloudy"),
+            group = n.optString("group", "cloudy"),
+            isDay = n.optInt("is_day", 1) == 1,
+            hi = d0?.optInt("hi") ?: n.optInt("temp"),
+            lo = d0?.optInt("lo") ?: n.optInt("temp"),
+            pop = d0?.optInt("pop") ?: 0
+        )
     }
 
     /** 逆地理：坐标 -> 城市名（用于定位后命名） */
