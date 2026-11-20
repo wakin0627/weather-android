@@ -19,7 +19,8 @@ data class AppRelease(
     val notes: String,
     val apkUrl: String,
     val sha256: String,
-    val force: Boolean
+    val force: Boolean,
+    val tag: String = ""
 )
 
 private fun httpGet(url: String, timeoutMs: Int = 12000, headers: Map<String, String> = emptyMap()): String? = try {
@@ -78,7 +79,7 @@ suspend fun checkGitHubRelease(): AppRelease? = withContext(Dispatchers.IO) {
             }
         }
         if (code <= 0) return@withContext null
-        AppRelease(code, name, notes, apkUrl, "", force)
+        AppRelease(code, name, notes, apkUrl, "", force, o.optString("tag_name"))
     } catch (e: Exception) {
         null
     }
@@ -97,17 +98,37 @@ private suspend fun checkServerRelease(): AppRelease? = withContext(Dispatchers.
     try {
         val o = JSONObject(text)
         if (!o.optBoolean("ok", false)) return@withContext null
+        val apk = o.optString("apk")
         AppRelease(
             versionCode = o.optInt("versionCode", 0),
             versionName = o.optString("versionName"),
             notes = o.optString("notes"),
-            apkUrl = o.optString("apk"),
+            apkUrl = if (apk.startsWith("http")) apk else Api.BASE_URL + apk,
             sha256 = o.optString("sha256"),
-            force = o.optBoolean("force", false)
+            force = o.optBoolean("force", false),
+            tag = o.optString("tag")
         )
     } catch (e: Exception) {
         null
     }
+}
+
+/**
+ * 下载安装包：先直连（GitHub 资产/CDN），失败再走自建服务端中转。
+ * 国内网络下 release-assets.githubusercontent.com 经常被污染，必须有这条后路。
+ */
+suspend fun downloadApkResilient(
+    ctx: Context,
+    rel: AppRelease,
+    onProgress: (Float) -> Unit
+): File? {
+    val fileName = "weather-${rel.versionName}.apk"
+    downloadApk(ctx, rel.apkUrl, fileName) { onProgress(it * 0.5f) }?.let { return it }
+
+    val tag = rel.tag.ifBlank { "v${rel.versionName}" }
+    if (Api.BASE_URL.isBlank()) return null
+    val proxy = "${Api.BASE_URL}/api/app/apk?tag=${java.net.URLEncoder.encode(tag, "UTF-8")}"
+    return downloadApk(ctx, proxy, fileName) { onProgress(0.5f + it * 0.5f) }
 }
 
 /** 下载安装包，回调进度 0..1 */

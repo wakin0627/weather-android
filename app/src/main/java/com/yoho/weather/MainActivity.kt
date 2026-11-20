@@ -110,7 +110,7 @@ private fun App() {
         scope.launch {
             downloading = true
             progress = 0f
-            val f = downloadApk(ctx, Api.BASE_URL + r.apkUrl, "weather-${r.versionName}.apk") { progress = it }
+            val f = downloadApkResilient(ctx, r) { progress = it }
             downloading = false
             if (f == null) {
                 toast("下载失败，请稍后重试")
