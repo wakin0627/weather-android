@@ -23,6 +23,7 @@ fun adviceEmoji(icon: String, title: String): String {
         key.contains("jacket") || key.contains("cloth") || t.contains("穿") -> "🧥"
         key.contains("car") || t.contains("洗车") -> "🚗"
         key.contains("dry") || t.contains("晾") -> "🧺"
+        key.contains("hike") || t.contains("爬山") || t.contains("徒步") -> "🥾"
         key.contains("run") || key.contains("sport") || t.contains("运动") || t.contains("跑") -> "🏃"
         key.contains("umbrella") || key.contains("rain") || t.contains("伞") || t.contains("雨") -> "☂️"
         key.contains("sun") || key.contains("uv") || t.contains("晒") || t.contains("紫外线") -> "🕶️"
@@ -99,6 +100,38 @@ fun AdviceScreen(data: WeatherBundle, onClose: () -> Unit) {
                         Metric("能见度", "${now.visibility}km", "👁")
                         Metric("气压", "${now.pressure}hPa", "📊")
                         Metric("风", "${now.windDir}${now.windLevel}级", "🍃")
+                    }
+                }
+            }
+
+            item {
+                GlassCard {
+                    CardLabel("紫外线")
+                    val uv = now.uv
+                    val (level, tip) = when {
+                        uv <= 2 -> "弱" to "日常不用特别防晒"
+                        uv <= 5 -> "中等" to "涂 SPF15+，中午戴个帽子"
+                        uv <= 7 -> "强" to "SPF30+，尽量避开正午直晒"
+                        uv <= 10 -> "很强" to "SPF50+，遮阳帽 + 太阳镜"
+                        else -> "极强" to "避免午间外出，皮肤十分钟就会晒伤"
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("☀️", fontSize = 22.sp)
+                        Spacer(Modifier.width(10.dp))
+                        Column(Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.Bottom) {
+                                Text("$uv", color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Light)
+                                Text("  $level", color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 4.dp))
+                            }
+                            Text(tip, color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
+                        }
+                        if (now.sunrise.isNotEmpty() || now.sunset.isNotEmpty()) {
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text("${now.sunrise} 日出", color = Color.White.copy(alpha = 0.55f), fontSize = 11.sp)
+                                Text("${now.sunset} 日落", color = Color.White.copy(alpha = 0.55f), fontSize = 11.sp)
+                            }
+                        }
                     }
                 }
             }

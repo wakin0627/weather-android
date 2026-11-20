@@ -34,6 +34,7 @@ uniform float3 uTop;
 uniform float3 uBottom;
 uniform float3 uSun;
 uniform float2 uSunPos;
+uniform float uWarm;
 
 float hash21(float2 p) {
     p = fract(p * float2(123.34, 456.21));
@@ -100,6 +101,12 @@ half4 main(float2 fragCoord) {
         sky *= half(1.0 - 0.12 * uRain);
     }
 
+    // 早晚霞光：贴近日出/日落时，地平线附近染橘粉
+    float horizon = pow(uv.y, 0.7);
+    half3 warmColor = half3(1.0, 0.46, 0.26);
+    sky = mix(sky, warmColor, half(uWarm * horizon * 0.62));
+    sky += half3(1.0, 0.62, 0.35) * half(uWarm * glow * 1.6);
+
     // 暗角，让底部文字更稳
     float vig = smoothstep(0.15, 1.15, uv.y);
     sky *= half(1.0 - 0.22 * vig);
@@ -113,7 +120,8 @@ fun SkyEngineBackdrop(
     group: String,
     isDay: Boolean,
     cloud: Int,
-    windKmh: Int
+    windKmh: Int,
+    warm: Float = 0f
 ) {
     if (Build.VERSION.SDK_INT < 33) {
         // 低版本走原来的 Canvas 引擎
@@ -163,6 +171,7 @@ fun SkyEngineBackdrop(
             shader.setFloatUniform("uCloud", cloudF)
             shader.setFloatUniform("uRain", rainF)
             shader.setFloatUniform("uNight", night)
+            shader.setFloatUniform("uWarm", warm)
             shader.setFloatUniform("uTop", top.red, top.green, top.blue)
             shader.setFloatUniform("uBottom", bottom.red, bottom.green, bottom.blue)
             shader.setFloatUniform("uSun", sunColor.red, sunColor.green, sunColor.blue)

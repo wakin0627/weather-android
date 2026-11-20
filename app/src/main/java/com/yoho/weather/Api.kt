@@ -37,7 +37,10 @@ data class Now(
     val text: String,
     val icon: String,
     val group: String,
-    val isDay: Boolean
+    val isDay: Boolean,
+    val uv: Int = 0,
+    val sunrise: String = "",
+    val sunset: String = ""
 )
 
 data class Hour(val t: String, val temp: Int, val pop: Int, val icon: String)
@@ -208,7 +211,10 @@ object Api {
             text = n.optString("text"),
             icon = n.optString("icon", "cloudy"),
             group = n.optString("group", "cloudy"),
-            isDay = n.optInt("is_day", 1) == 1
+            isDay = n.optInt("is_day", 1) == 1,
+            uv = n.optInt("uv", 0),
+            sunrise = n.optString("sunrise"),
+            sunset = n.optString("sunset")
         )
 
         val hoursJson = wx.getJSONArray("hours")
