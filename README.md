@@ -48,7 +48,12 @@ GITHUB_TOKEN=xxx ./release.sh "更新说明"
 3. 与本地 `BuildConfig.VERSION_CODE` 比较，新的就弹窗
 4. 下载 `.apk` 附件 → `FileProvider` → 系统安装器
 
-GitHub 不可达时退回自建服务端的 `/api/app/version`（同一份清单格式）。
+**两级兜底**（国内网络实测必需）：
+
+- 检查：`api.github.com` 通就用它；不通退回自建服务端 `/api/app/version`（服务端再代理 GitHub）
+- 下载：先直连 GitHub 资产；失败自动改走自建服务端 `/api/app/apk?tag=vX.Y.Z` 中转
+
+`release-assets.githubusercontent.com` 在国内会被 DNS 污染，直连基本必失败，所以中转这条后路不是可选而是必需。
 
 ## 结构
 
