@@ -174,6 +174,31 @@ fun WeatherScreen(
                         lineHeight = 96.sp
                     )
                     Text(now?.text ?: (error ?: "加载中"), color = Color.White, fontSize = 20.sp)
+                    data?.air?.let { air ->
+                        val tone = when {
+                            air.aqi <= 50 -> Color(0xFF7BE495)
+                            air.aqi <= 100 -> Color(0xFFFFD479)
+                            air.aqi <= 150 -> Color(0xFFFFA45C)
+                            else -> Color(0xFFFF7B7B)
+                        }
+                        Row(
+                            Modifier
+                                .padding(top = 8.dp)
+                                .clip(RoundedCornerShape(999.dp))
+                                .background(Color.White.copy(alpha = 0.14f))
+                                .padding(horizontal = 10.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(Modifier.size(6.dp).clip(RoundedCornerShape(999.dp)).background(tone))
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                "空气 ${air.level} ${air.aqi}",
+                                color = Color.White.copy(alpha = 0.92f),
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
                     if (data != null) {
                         Text(
                             "最高 ${data.days.first().hi}°　最低 ${data.days.first().lo}°",

@@ -104,6 +104,36 @@ fun AdviceScreen(data: WeatherBundle, onClose: () -> Unit) {
                 }
             }
 
+            data.air?.let { air ->
+                item {
+                    GlassCard {
+                        CardLabel("空气质量")
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                "${air.aqi}",
+                                color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Light
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text("${air.level} · US AQI", color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold)
+                                Text(
+                                    airTip(air.aqi),
+                                    color = Color.White.copy(alpha = 0.6f), fontSize = 11.5.sp
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(10.dp))
+                        Row(Modifier.fillMaxWidth()) {
+                            Poll("PM2.5", air.pm25)
+                            Poll("PM10", air.pm10)
+                            Poll("O₃", air.o3)
+                            Poll("NO₂", air.no2)
+                        }
+                    }
+                }
+            }
+
             item {
                 GlassCard {
                     CardLabel("紫外线")
@@ -179,6 +209,22 @@ private fun RowScope.Metric(label: String, value: String, emoji: String) {
         Text(emoji, fontSize = 15.sp)
         Text(value, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
         Text(label, color = Color.White.copy(alpha = 0.5f), fontSize = 10.5.sp)
+    }
+}
+
+private fun airTip(aqi: Int): String = when {
+    aqi <= 50 -> "空气很好，开窗通风"
+    aqi <= 100 -> "可以正常户外活动"
+    aqi <= 150 -> "敏感人群减少户外"
+    aqi <= 200 -> "建议戴口罩，少开窗"
+    else -> "尽量留在室内"
+}
+
+@Composable
+private fun RowScope.Poll(label: String, v: Double) {
+    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(String.format("%.0f", v), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        Text(label, color = Color.White.copy(alpha = 0.45f), fontSize = 10.sp)
     }
 }
 

@@ -93,6 +93,28 @@ half4 main(float2 fragCoord) {
     cloudColor = mix(cloudColor, half3(0.98, 0.95, 0.88), half(glow * 1.4));
     sky = mix(sky, cloudColor, half(clamp(c * 0.9, 0.0, 0.92)));
 
+    // 星空 + 月亮 + 城市灯光（夜间）
+    if (uNight > 0.01) {
+        float2 sp = float2(uv.x * aspect, uv.y) * 78.0;
+        float2 cell = floor(sp);
+        float2 jitter = float2(hash21(cell + 3.1), hash21(cell + 7.7)) - 0.5;
+        float2 fr = fract(sp) - 0.5 - jitter * 0.7;
+        float h = hash21(cell);
+        float rstar = 0.040 + 0.045 * fract(h * 17.0);
+        float twinkle = 0.5 + 0.5 * sin(uTime * 2.2 + h * 6.2831);
+        float star = smoothstep(rstar, 0.0, length(fr)) * step(0.78, h)
+                     * twinkle * uNight * smoothstep(0.90, 0.10, uv.y);
+        sky += half3(star * 1.15);
+
+        float md = length((uv - sunPos) * float2(aspect, 1.0));
+        float moonDisc = smoothstep(0.046, 0.036, md);
+        sky = mix(sky, half3(0.90, 0.92, 0.86), half(moonDisc * 0.92 * uNight));
+        sky += half3(0.42, 0.54, 0.80) * half(exp(-md * 6.0) * 0.32 * uNight);
+
+        float cityGlow = exp(-pow((uv.y - 0.97) * 9.0, 2.0)) * uNight;
+        sky += half3(1.0, 0.70, 0.40) * half(cityGlow * 0.14);
+    }
+
     // 雨帘
     if (uRain > 0.02) {
         float2 rp = float2(uv.x * 90.0, uv.y * 9.0 - uTime * 3.4);
@@ -104,7 +126,7 @@ half4 main(float2 fragCoord) {
     // 早晚霞光：贴近日出/日落时，地平线附近染橘粉
     float horizon = pow(uv.y, 0.7);
     half3 warmColor = half3(1.0, 0.46, 0.26);
-    sky = mix(sky, warmColor, half(uWarm * horizon * 0.62));
+    sky = mix(sky, warmColor, half(uWarm * horizon * 0.62 * (1.0 - uNight * 0.80)));
     sky += half3(1.0, 0.62, 0.35) * half(uWarm * glow * 1.6);
 
     // 暗角，让底部文字更稳

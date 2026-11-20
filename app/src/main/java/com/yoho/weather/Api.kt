@@ -60,13 +60,25 @@ data class Day(
 
 data class Advice(val icon: String, val title: String, val sub: String)
 
+data class Air(
+    val aqi: Int,
+    val level: String,
+    val pm25: Double,
+    val pm10: Double,
+    val o3: Double,
+    val no2: Double,
+    val so2: Double,
+    val co: Double
+)
+
 data class WeatherBundle(
     val place: Place?,
     val now: Now,
     val hours: List<Hour>,
     val days: List<Day>,
     val advice: List<Advice>,
-    val updated: Long
+    val updated: Long,
+    val air: Air? = null
 )
 
 data class CityCardInfo(
@@ -246,8 +258,22 @@ object Api {
             Advice(o.optString("icon"), o.optString("title"), o.optString("sub"))
         }
 
+        val airJson = wx.optJSONObject("air")
+        val air = if (airJson != null && airJson.optBoolean("ok", false)) {
+            Air(
+                aqi = airJson.optInt("aqi", 0),
+                level = airJson.optString("level", "未知"),
+                pm25 = airJson.optDouble("pm25", 0.0),
+                pm10 = airJson.optDouble("pm10", 0.0),
+                o3 = airJson.optDouble("o3", 0.0),
+                no2 = airJson.optDouble("no2", 0.0),
+                so2 = airJson.optDouble("so2", 0.0),
+                co = airJson.optDouble("co", 0.0)
+            )
+        } else null
+
         Result.success(
-            WeatherBundle(place, now, hours, days, advice, wx.optLong("updated", 0L))
+            WeatherBundle(place, now, hours, days, advice, wx.optLong("updated", 0L), air)
         )
     }
 }
