@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -192,6 +193,12 @@ private fun App() {
     }
 
     val hazeState = remember { HazeState() }
+
+    // 返回键：先关浮层，再回首页 tab，最后才退出
+    BackHandler(enabled = showCity) { showCity = false }
+    BackHandler(enabled = showName) { showName = false }
+    BackHandler(enabled = showDays) { showDays = false }
+    BackHandler(enabled = tab != 0) { tab = 0 }
 
     Box(Modifier.fillMaxSize().background(Color(0xFF0A0F16))) {
       Box(Modifier.fillMaxSize().hazeSource(hazeState)) {
