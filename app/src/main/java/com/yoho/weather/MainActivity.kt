@@ -78,6 +78,7 @@ private fun App() {
     var city by remember { mutableStateOf(CityStore.current(ctx) ?: DEFAULT_CITY) }
     var locating by remember { mutableStateOf(false) }
     var showCity by remember { mutableStateOf(false) }
+    var showAdvice by remember { mutableStateOf(false) }
     var favCount by remember { mutableIntStateOf(CityStore.favorites(ctx).size) }
 
     // 应用内更新
@@ -195,6 +196,7 @@ private fun App() {
     val hazeState = remember { HazeState() }
 
     // 返回键：先关浮层，再回首页 tab，最后才退出
+    BackHandler(enabled = showAdvice) { showAdvice = false }
     BackHandler(enabled = showCity) { showCity = false }
     BackHandler(enabled = showName) { showName = false }
     BackHandler(enabled = showDays) { showDays = false }
@@ -211,7 +213,8 @@ private fun App() {
                 onOpenDays = { if (data != null) showDays = true },
                 onToast = { toast(it) },
                 cityName = data?.place?.city?.ifEmpty { city.name } ?: city.name,
-                onOpenCity = { showCity = true }
+                onOpenCity = { showCity = true },
+                onOpenAdvice = { if (data != null) showAdvice = true }
             )
             1 -> androidx.compose.runtime.key(city.lng, city.lat) { MapScreen(city.lng, city.lat) }
             else -> MeScreen(
@@ -228,6 +231,10 @@ private fun App() {
 
         Box(Modifier.align(Alignment.BottomCenter)) {
             LiquidGlassBar(tab, hazeState) { tab = it }
+        }
+
+        if (showAdvice && data != null) {
+            AdviceScreen(data!!) { showAdvice = false }
         }
 
         // Apple 天气式城市卡片列表（全屏覆盖）

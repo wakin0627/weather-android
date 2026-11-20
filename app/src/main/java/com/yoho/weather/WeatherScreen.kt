@@ -61,14 +61,15 @@ fun WeatherScreen(
     onOpenDays: () -> Unit,
     onToast: (String) -> Unit,
     cityName: String = "",
-    onOpenCity: () -> Unit = {}
+    onOpenCity: () -> Unit = {},
+    onOpenAdvice: () -> Unit = {}
 ) {
     val now = data?.now
     val group = now?.group ?: "cloudy"
     val isDay = now?.isDay ?: true
 
     Box(Modifier.fillMaxSize()) {
-        SkyBackdrop(group, isDay, now?.cloud ?: 40, now?.windKmh ?: 5)
+        SkyEngineBackdrop(group, isDay, now?.cloud ?: 40, now?.windKmh ?: 5)
         // 底部压暗，保证白字可读
         Box(
             Modifier
@@ -174,19 +175,10 @@ fun WeatherScreen(
             }
 
             if (data != null) {
-                item { AdviceCard(data, onToast) }
+                item { AdviceCard(data, onToast, onOpenAdvice) }
                 item { HourlyCard(data) }
                 item { DaysCard(data, onOpenDays) }
                 item { MiniGrid(data) }
-                item {
-                    Text(
-                        "数据来自 Open-Meteo / 高德 · 演示版 v${Api.APP_VERSION}",
-                        color = Color.White.copy(alpha = 0.45f),
-                        fontSize = 10.5.sp,
-                        modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-                        textAlign = TextAlign.Center
-                    )
-                }
             } else if (error != null) {
                 item {
                     GlassCard {
@@ -207,16 +199,19 @@ fun WeatherScreen(
 }
 
 @Composable
-private fun AdviceCard(data: WeatherBundle, onToast: (String) -> Unit) {
+private fun AdviceCard(data: WeatherBundle, onToast: (String) -> Unit, onOpenAdvice: () -> Unit) {
     val now = data.now
     GlassCard {
-        CardLabel("生活指南", "全部 ›")
+        CardLabel("生活指南", "全部 ›", onClick = onOpenAdvice)
         data.advice.take(2).forEach { a ->
             Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(
-                    Modifier.size(22.dp).clip(RoundedCornerShape(6.dp))
-                        .background(Color.White.copy(alpha = 0.14f))
-                )
+                    Modifier.size(30.dp).clip(RoundedCornerShape(9.dp))
+                        .background(Color.White.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(adviceEmoji(a.icon, a.title), fontSize = 16.sp)
+                }
                 Spacer(Modifier.width(10.dp))
                 Column {
                     Text(a.title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
@@ -277,13 +272,19 @@ private fun DaysCard(data: WeatherBundle, onOpenDays: () -> Unit) {
                 Modifier.fillMaxWidth().padding(vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    dayLabel(d.date, i),
-                    color = Color.White,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.width(50.dp)
-                )
+                Column(Modifier.width(62.dp)) {
+                    Text(
+                        dayLabel(d.date, i),
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        d.date.takeLast(5).replace("-", "/"),
+                        color = Color.White.copy(alpha = 0.45f),
+                        fontSize = 10.sp
+                    )
+                }
                 WeatherIcon(d.icon, 22)
                 Text(
                     "${d.lo}°",

@@ -8,6 +8,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -160,7 +161,7 @@ fun GlassCard(
 }
 
 @Composable
-fun CardLabel(text: String, trailing: String? = null) {
+fun CardLabel(text: String, trailing: String? = null, onClick: (() -> Unit)? = null) {
     Row(
         Modifier.fillMaxWidth().padding(bottom = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -175,6 +176,9 @@ fun CardLabel(text: String, trailing: String? = null) {
         if (trailing != null) {
             Text(
                 trailing,
+                modifier = Modifier.then(
+                    if (onClick != null) Modifier.clip(RoundedCornerShape(8.dp)).clickable { onClick() } else Modifier
+                ),
                 color = Color.White.copy(alpha = 0.9f),
                 fontSize = 11.5.sp,
                 fontWeight = FontWeight.SemiBold
