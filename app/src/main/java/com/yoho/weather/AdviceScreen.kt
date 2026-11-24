@@ -75,7 +75,7 @@ fun AdviceScreen(data: WeatherBundle, onClose: () -> Unit) {
                                     .background(Color.White.copy(alpha = 0.14f)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(adviceEmoji(a.icon, a.title), fontSize = 19.sp)
+                                Glyph(glyphOf(a.icon, a.title), Color.White.copy(alpha = 0.92f), 19.dp)
                             }
                             Spacer(Modifier.width(12.dp))
                             Column {
@@ -206,7 +206,7 @@ fun AdviceScreen(data: WeatherBundle, onClose: () -> Unit) {
 @Composable
 private fun RowScope.Metric(label: String, value: String, emoji: String) {
     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(emoji, fontSize = 15.sp)
+        Glyph(if (label == "紫外线") "uv" else if (label == "湿度") "hum" else if (label == "风") "wind" else if (label == "气压") "press" else if (label == "能见度") "vis" else "air", Color.White.copy(alpha = 0.55f), 15.dp)
         Text(value, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
         Text(label, color = Color.White.copy(alpha = 0.5f), fontSize = 10.5.sp)
     }

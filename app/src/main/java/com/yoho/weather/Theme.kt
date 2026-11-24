@@ -27,11 +27,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.sin
 
-val CardAlpha = 0.17f
-val CardBorder = 0.22f
+val CardAlpha = 0.12f
+val CardBorder = 0.10f
 val DimText = 0.68f
 
-val Radius = 19.dp
+val Radius = 22.dp
 
 fun skyColors(group: String, isDay: Boolean): List<Color> {
     val day = mapOf(

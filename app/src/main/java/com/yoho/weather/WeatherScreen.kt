@@ -127,10 +127,9 @@ fun WeatherScreen(
                     Pill(if (cityName.isBlank()) "城市" else cityName) { onOpenCity() }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            now?.time?.takeLast(5) ?: "--:--",
-                            color = Color.White.copy(alpha = 0.75f),
-                            fontSize = 12.5.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            "更新 ${now?.time?.takeLast(5) ?: "--:--"}",
+                            color = Color.White.copy(alpha = 0.6f),
+                            fontSize = 11.sp,
                             modifier = Modifier.padding(end = 8.dp)
                         )
                         Pill(if (loading) "刷新中" else "刷新") { onRefresh() }
@@ -185,7 +184,7 @@ fun WeatherScreen(
                             Modifier
                                 .padding(top = 8.dp)
                                 .clip(RoundedCornerShape(999.dp))
-                                .background(Color.White.copy(alpha = 0.14f))
+                                .background(Color(0x33000000))
                                 .padding(horizontal = 10.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -193,9 +192,9 @@ fun WeatherScreen(
                             Spacer(Modifier.width(6.dp))
                             Text(
                                 "空气 ${air.level} ${air.aqi}",
-                                color = Color.White.copy(alpha = 0.92f),
+                                color = Color.White,
                                 fontSize = 11.5.sp,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
@@ -250,7 +249,7 @@ private fun AdviceCard(data: WeatherBundle, onToast: (String) -> Unit, onOpenAdv
                         .background(Color.White.copy(alpha = 0.14f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(adviceEmoji(a.icon, a.title), fontSize = 16.sp)
+                    Glyph(glyphOf(a.icon, a.title), Color.White.copy(alpha = 0.92f), 18.dp)
                 }
                 Spacer(Modifier.width(10.dp))
                 Column {
@@ -260,8 +259,8 @@ private fun AdviceCard(data: WeatherBundle, onToast: (String) -> Unit, onOpenAdv
             }
         }
         Text(
-            "体感 ${now.feels}° · 湿度 ${now.humidity}% · 能见度 ${now.visibility}km",
-            color = Color.White.copy(alpha = 0.5f),
+            "湿度 ${now.humidity}% · 能见度 ${now.visibility}km · 气压 ${now.pressure}hPa",
+            color = Color.White.copy(alpha = 0.58f),
             fontSize = 11.5.sp,
             modifier = Modifier.padding(top = 4.dp)
         )
@@ -320,20 +319,29 @@ private fun HourlyCard(data: WeatherBundle) {
                         WeatherIcon(slot.hour.icon, 28)
                     } else {
                         Box(Modifier.size(28.dp), contentAlignment = Alignment.Center) {
-                            Text(if (slot.isSunset) "🌇" else "🌅", fontSize = 20.sp)
+                            Glyph(
+                                if (slot.isSunset) "sunset" else "sunrise",
+                                if (slot.isSunset) Color(0xFFFFC46B) else Color(0xFFFFD479),
+                                20.dp
+                            )
                         }
                     }
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        if (slot.hour != null) "${slot.hour.temp}°" else "--",
+                        if (slot.hour != null) "${slot.hour.temp}°" else "",
                         color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold
                     )
-                    Text(
-                        if (slot.hour != null) "${slot.hour.pop}%" else "",
-                        color = Color.White.copy(alpha = 0.4f),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    val pop = slot.hour?.pop ?: 0
+                    if (slot.hour != null) {
+                        Text(
+                            if (pop >= 20) "$pop%" else "",
+                            color = if (pop >= 50) Color(0xFF8FD0FF) else Color.White.copy(alpha = 0.55f),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    } else {
+                        Spacer(Modifier.height(12.dp))
+                    }
                 }
             }
         }
@@ -482,7 +490,7 @@ private fun RainNowLine(data: WeatherBundle) {
                 .background(if (rainSoon) Color(0x33FF8A5C) else Color(0x338FD0FF)),
             contentAlignment = Alignment.Center
         ) {
-            Text(if (rainSoon) "☔" else "☀", fontSize = 12.sp)
+            Glyph(if (rainSoon) "umbrella" else "uv", Color.White.copy(alpha = 0.9f), 13.dp)
         }
         Spacer(Modifier.width(8.dp))
         Text(
@@ -498,37 +506,35 @@ private fun RainNowLine(data: WeatherBundle) {
 private fun MetricDuo(data: WeatherBundle) {
     val now = data.now
     val uv = now.uv
-    val (uvLevel, uvTip) = when {
-        uv <= 2 -> "弱" to "不用特别防晒"
-        uv <= 5 -> "中等" to "注意防晒"
-        uv <= 7 -> "强" to "SPF30+ 防晒"
-        uv <= 10 -> "很强" to "遮阳帽 + 墨镜"
-        else -> "极强" to "避免午间外出"
+    val uvLevel = when {
+        uv <= 2 -> "弱"; uv <= 5 -> "中等"; uv <= 7 -> "强"; uv <= 10 -> "很强"; else -> "极强"
     }
-    val (humLevel, humTip) = when {
-        now.humidity < 30 -> "干燥" to "补水保湿"
-        now.humidity < 60 -> "舒适" to "体感刚好"
-        now.humidity < 80 -> "偏湿" to "注意通风"
-        else -> "潮湿" to "容易闷"
+    val humLevel = when {
+        now.humidity < 30 -> "干燥"; now.humidity < 60 -> "舒适"; now.humidity < 80 -> "偏湿"; else -> "潮湿"
     }
 
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        MiniMetric(
-            modifier = Modifier.weight(1f),
-            title = "紫外线",
-            value = "$uv",
-            level = "$uvLevel · $uvTip",
-            tint = Color(0xFFFFA45C),
-            progress = (uv / 11f).coerceIn(0.05f, 1f)
-        )
-        MiniMetric(
-            modifier = Modifier.weight(1f),
-            title = "湿度",
-            value = "${now.humidity}%",
-            level = "$humLevel · $humTip",
-            tint = Color(0xFF7FB6FF),
-            progress = (now.humidity / 100f).coerceIn(0.05f, 1f)
-        )
+    GlassCard {
+        Row(Modifier.fillMaxWidth()) {
+            DetailCell("uv", "紫外线", "$uv", uvLevel)
+            DetailCell("hum", "湿度", "${now.humidity}%", humLevel)
+            DetailCell("wind", "风力", "${now.windLevel} 级", now.windDir)
+        }
+    }
+}
+
+@Composable
+private fun androidx.compose.foundation.layout.RowScope.DetailCell(
+    glyph: String,
+    label: String,
+    value: String,
+    note: String
+) {
+    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+        Glyph(glyph, Color.White.copy(alpha = 0.55f), 18.dp)
+        Spacer(Modifier.height(6.dp))
+        Text(value, color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Light)
+        Text(label, color = Color.White.copy(alpha = 0.55f), fontSize = 10.5.sp)
+        Text(note, color = Color.White.copy(alpha = 0.46f), fontSize = 9.5.sp)
     }
 }
 

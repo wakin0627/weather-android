@@ -89,7 +89,7 @@ half4 main(float2 fragCoord) {
 
     // 薄雾光带：晴天也保持缓慢流动
     float haze = fbm(float2(uv.x * 1.35 + uTime * 0.016, uv.y * 3.4 - uTime * 0.005));
-    sky += half3(1.0, 0.98, 0.95) * half(0.055 * smoothstep(0.32, 0.92, haze));
+    sky += half3(1.0, 0.98, 0.96) * half(0.022 * smoothstep(0.35, 0.92, haze));
 
     // 云层：两层噪声叠加出体积感
     float2 p = float2(uv.x * aspect, uv.y) * 2.3;
@@ -135,8 +135,8 @@ half4 main(float2 fragCoord) {
     // 早晚霞光：贴近日出/日落时，地平线附近染橘粉
     float horizon = pow(uv.y, 0.7);
     half3 warmColor = half3(1.0, 0.46, 0.26);
-    sky = mix(sky, warmColor, half(uWarm * horizon * 0.62 * (1.0 - uNight * 0.80)));
-    sky += half3(1.0, 0.58, 0.32) * half(uWarm * glow * 0.55);
+    sky = mix(sky, warmColor, half(uWarm * horizon * 0.34 * (1.0 - uNight * 0.80)));
+    sky += half3(1.0, 0.60, 0.34) * half(uWarm * glow * 0.28);
 
     // 暗角，让底部文字更稳
     float vig = smoothstep(0.15, 1.15, uv.y);
