@@ -42,7 +42,7 @@ fun PixelSky(group: String, isDay: Boolean, cloud: Int, warm: Float) {
         val w = size.width
         val h = size.height
         val cell = (w / 90f).coerceAtLeast(3f)   // 像素块尺寸
-        val bands = 30
+        val bands = 64
         val top = colors.first()
         val mid = colors[1]
         val bottom = colors.last()
@@ -57,15 +57,21 @@ fun PixelSky(group: String, isDay: Boolean, cloud: Int, warm: Float) {
         for (i in 0 until bands) {
             val f = i.toFloat() / (bands - 1)
             val c = if (f < 0.65f) lerp(top, mid, f / 0.65f) else lerp(mid, bottom, (f - 0.65f) / 0.35f)
-            val y = h * f / 1f
-            drawRect(c, Offset(0f, y), Size(w, h / bands + 1f))
-            // 抖动：上下两行交替补丁
-            if (i > 0) {
-                val dc = lerp(if (f < 0.65f) lerp(top, mid, (f - 0.02f) / 0.65f) else c, c, 0.5f)
-                var x = if (i % 2 == 0) 0f else cell
-                while (x < w) {
-                    drawRect(dc.copy(alpha = 0.20f), Offset(x, y), Size(cell, cell))
-                    x += cell * 2
+            val y = h * f
+            val bandH = h / (bands - 1f) + 2f   // 与步长同分母，并重叠 2px 消除缝隙
+            drawRect(c, Offset(0f, y), Size(w, bandH))
+            // 4x4 有序抖动：把下一档颜色按棋盘比例掺一点，消除色带台阶
+            val nextC = if (f < 0.65f) lerp(top, mid, (f + 1f / (bands - 1f)) / 0.65f)
+                        else lerp(mid, bottom, (f + 1f / (bands - 1f) - 0.65f) / 0.35f)
+            val mixC = lerp(c, nextC, 0.5f)
+            val bayer = intArrayOf(0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5)
+            val rows = ((h / (bands - 1f)) / cell).toInt().coerceAtLeast(1)
+            for (r in 0 until rows) {
+                for (cc in 0 until ((w / cell).toInt())) {
+                    val idx = (r % 4) * 4 + (cc % 4)
+                    if (bayer[idx] >= 8) {
+                        drawRect(mixC, Offset(cc * cell, y + r * cell), Size(cell, cell))
+                    }
                 }
             }
         }
@@ -77,8 +83,8 @@ fun PixelSky(group: String, isDay: Boolean, cloud: Int, warm: Float) {
             var a = 0f
             while (y < h) {
                 a += 0.035f
-                drawRect(warmColor.copy(alpha = a * warm * 0.22f), Offset(0f, y), Size(w, h / bands))
-                y += h / bands
+                drawRect(warmColor.copy(alpha = a * warm * 0.22f), Offset(0f, y), Size(w, h / (bands - 1f) + 2f))
+                y += h / (bands - 1f)
             }
         }
 
