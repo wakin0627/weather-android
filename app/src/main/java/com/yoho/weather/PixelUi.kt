@@ -23,27 +23,48 @@ import androidx.compose.ui.unit.sp
 
 val PixelFont = FontFamily(Font(R.font.ark_pixel))
 
-// 像素风调色板：深底 + 荧光描边，拒绝圆角与模糊
-val PxPanel = Color(0xF215212C)
-val PxPanelDeep = Color(0xF20E1721)
-val PxBorder = Color(0xFF3A4E62)
-val PxBorderDim = Color(0x803A4E62)
-val PxText = Color(0xFFE4ECF4)
-val PxTextDim = Color(0xFF8FA3B6)
-val PxAccent = Color(0xFFD8A85A)
-val PxBlue = Color(0xFF6E9DBF)
+/**
+ * 像素风主题：白天走明亮色（浅天空 + 浅面板 + 深墨字），夜里换成深蓝但仍保留对比，
+ * 避免整屏黑压压。
+ */
+object Px {
+    var panel = Color(0xF7F3F8FC)
+    var panelDeep = Color(0xFFE8F0F7)
+    var border = Color(0xFF9DB8CC)
+    var borderDim = Color(0x809DB8CC)
+    var ink = Color(0xFF16222E)
+    var dim = Color(0xFF4E6579)
+    var accent = Color(0xFFD9772F)
+    var blue = Color(0xFF2E7FB0)
+
+    fun apply(isDay: Boolean) {
+        if (isDay) {
+            panel = Color(0xF7F3F8FC); panelDeep = Color(0xFFE8F0F7)
+            border = Color(0xFF9DB8CC); borderDim = Color(0x809DB8CC)
+            ink = Color(0xFF16222E); dim = Color(0xFF33475C)
+            accent = Color(0xFFD9772F); blue = Color(0xFF2E7FB0)
+        } else {
+            panel = Color(0xF21B2A3C); panelDeep = Color(0xFF16222F)
+            border = Color(0xFF3E5C77); borderDim = Color(0x803E5C77)
+            ink = Color(0xFFE9F2FA); dim = Color(0xFF9DB3C7)
+            accent = Color(0xFFE8A55E); blue = Color(0xFF7FB3D5)
+        }
+    }
+}
+
+
 
 /** 像素卡片：直角 + 1px 描边 + 内侧投影线，经典 8-bit 面板 */
 @Composable
 fun PixelCard(
     modifier: Modifier = Modifier,
-    accent: Color = PxBorderDim,
+    accent: Color = Px.borderDim,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
         modifier
             .fillMaxWidth()
-            .background(PxPanel)
+            .background(Px.panel)
             .border(1.dp, accent)
             .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
@@ -58,14 +79,14 @@ fun PixelLabel(text: String, trailing: String? = null, onClick: (() -> Unit)? = 
         Modifier.fillMaxWidth().padding(bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(Modifier.size(6.dp).background(PxAccent))
+        Box(Modifier.size(6.dp).background(Px.accent))
         Spacer(Modifier.width(6.dp))
-        Text(text, color = PxTextDim, fontSize = 11.sp, fontFamily = PixelFont, fontWeight = FontWeight.Normal)
+        Text(text, color = Px.dim, fontSize = 11.sp, fontFamily = PixelFont, fontWeight = FontWeight.Normal)
         Spacer(Modifier.weight(1f))
         if (trailing != null) {
             Text(
                 trailing,
-                color = PxBlue,
+                color = Px.blue,
                 fontSize = 11.sp,
                 fontFamily = PixelFont,
                 modifier = Modifier
@@ -81,14 +102,14 @@ fun PixelLabel(text: String, trailing: String? = null, onClick: (() -> Unit)? = 
 fun PixelPill(text: String, filled: Boolean = false, onClick: () -> Unit) {
     Box(
         Modifier
-            .background(if (filled) PxBorder else Color(0x33101A24))
-            .border(1.dp, if (filled) PxBorder else PxBorderDim)
+            .background(if (filled) Px.border else Color(0x33101A24))
+            .border(1.dp, if (filled) Px.border else Px.borderDim)
             .clickable { onClick() }
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Text(
             text,
-            color = if (filled) Color(0xFF08111A) else PxText,
+            color = if (filled) Color(0xFF08111A) else Px.ink,
             fontSize = 11.sp,
             fontFamily = PixelFont
         )
@@ -102,7 +123,7 @@ fun PixelDivider() {
         val step = 4f
         var x = 0f
         while (x < size.width) {
-            drawRect(PxBorderDim.copy(alpha = 0.5f), Offset(x, 0f), Size(step / 2, size.height))
+            drawRect(Px.borderDim.copy(alpha = 0.5f), Offset(x, 0f), Size(step / 2, size.height))
             x += step
         }
     }
@@ -118,11 +139,11 @@ fun PixelGlyph(kind: String, tint: Color, size: Dp = 18.dp) {
         }
         when (kind) {
             "sun" -> {
-                px(7, 7, 2, 2, PxAccent)
-                px(6, 6, 4, 1, PxAccent.copy(alpha = 0.62f))
-                px(6, 9, 4, 1, PxAccent.copy(alpha = 0.62f))
-                px(5, 7, 1, 2, PxAccent.copy(alpha = 0.62f))
-                px(10, 7, 1, 2, PxAccent.copy(alpha = 0.62f))
+                px(7, 7, 2, 2, Px.accent)
+                px(6, 6, 4, 1, Px.accent.copy(alpha = 0.62f))
+                px(6, 9, 4, 1, Px.accent.copy(alpha = 0.62f))
+                px(5, 7, 1, 2, Px.accent.copy(alpha = 0.62f))
+                px(10, 7, 1, 2, Px.accent.copy(alpha = 0.62f))
                 px(7, 3, 2, 1)
                 px(7, 12, 2, 1)
                 px(3, 7, 1, 2)
@@ -138,9 +159,9 @@ fun PixelGlyph(kind: String, tint: Color, size: Dp = 18.dp) {
             "rain" -> {
                 px(4, 7, 8, 3, Color(0xFFDCE9F5))
                 px(5, 5, 4, 2, Color(0xFFEDF6FF))
-                px(5, 11, 1, 3, PxBlue)
-                px(8, 11, 1, 4, PxBlue)
-                px(11, 11, 1, 3, PxBlue)
+                px(5, 11, 1, 3, Px.blue)
+                px(8, 11, 1, 4, Px.blue)
+                px(11, 11, 1, 3, Px.blue)
             }
             "snow" -> {
                 px(4, 7, 8, 3, Color(0xFFDCE9F5))
@@ -149,10 +170,10 @@ fun PixelGlyph(kind: String, tint: Color, size: Dp = 18.dp) {
             }
             "storm" -> {
                 px(4, 6, 8, 3, Color(0xFFB9C9D8))
-                px(7, 9, 2, 3, PxAccent)
-                px(6, 12, 2, 2, PxAccent)
-                px(5, 9, 1, 2, PxBlue)
-                px(11, 9, 1, 3, PxBlue)
+                px(7, 9, 2, 3, Px.accent)
+                px(6, 12, 2, 2, Px.accent)
+                px(5, 9, 1, 2, Px.blue)
+                px(11, 9, 1, 3, Px.blue)
             }
             "fog" -> {
                 px(3, 5, 10, 1, Color(0xFFDCE9F5))
@@ -206,12 +227,12 @@ fun PixelGlyph(kind: String, tint: Color, size: Dp = 18.dp) {
                 px(2, 8, 12, 1); px(4, 6, 8, 1); px(4, 10, 8, 1); px(7, 7, 2, 2)
             }
             "sunset" -> {
-                px(7, 6, 2, 3, PxAccent); px(5, 7, 6, 2, Color(0xFFFFB36B))
+                px(7, 6, 2, 3, Px.accent); px(5, 7, 6, 2, Color(0xFFFFB36B))
                 px(2, 10, 12, 1)
                 px(7, 12, 2, 1); px(6, 13, 4, 1)
             }
             "sunrise" -> {
-                px(7, 7, 2, 3, PxAccent); px(5, 8, 6, 2, Color(0xFFFFB36B))
+                px(7, 7, 2, 3, Px.accent); px(5, 8, 6, 2, Color(0xFFFFB36B))
                 px(2, 11, 12, 1)
                 px(7, 3, 2, 1); px(6, 4, 4, 1)
             }
@@ -241,8 +262,8 @@ fun PixelBar(tab: Int, onTab: (Int) -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
-            .background(Color(0xF20A121A))
-            .border(1.dp, PxBorderDim)
+            .background(Px.panel)
+            .border(1.dp, Px.border)
             .navigationBarsPadding()
     ) {
         Row(Modifier.fillMaxWidth().height(46.dp)) {
@@ -252,16 +273,16 @@ fun PixelBar(tab: Int, onTab: (Int) -> Unit) {
                     Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .background(if (on) Color(0xFF1E2A36) else Color.Transparent)
+                        .background(if (on) Px.panelDeep else Color.Transparent)
                         .clickable { onTab(i) },
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    PixelGlyph(glyph, if (on) PxAccent else PxTextDim, 15.dp)
+                    PixelGlyph(glyph, if (on) Px.accent else Px.dim, 15.dp)
                     Spacer(Modifier.height(3.dp))
                     Text(
                         label,
-                        color = if (on) PxAccent else PxTextDim,
+                        color = if (on) Px.accent else Px.dim,
                         fontSize = 9.sp,
                         fontFamily = PixelFont
                     )
@@ -275,19 +296,19 @@ fun PixelBar(tab: Int, onTab: (Int) -> Unit) {
 /** 像素天空配色：低饱和、三阶以内，避免多色打架 */
 fun pxSkyColors(group: String, isDay: Boolean): List<Color> {
     val day = when (group) {
-        "clear" -> listOf(0xFF2C4A66, 0xFF44688A, 0xFF7FA0B8)
-        "few" -> listOf(0xFF334F6A, 0xFF4E7188, 0xFF89A6BC)
-        "cloudy" -> listOf(0xFF3B5163, 0xFF56707F, 0xFF93A5B2)
-        "rain" -> listOf(0xFF324656, 0xFF48606F, 0xFF7C8F9B)
-        "snow" -> listOf(0xFF3D5566, 0xFF5E7688, 0xFFA6B6C2)
-        "storm" -> listOf(0xFF28323D, 0xFF3C4956, 0xFF65727E)
-        else -> listOf(0xFF3B5163, 0xFF56707F, 0xFF93A5B2)
+        "clear" -> listOf(0xFF5EA7D6, 0xFF8CC4E6, 0xFFBFE0F4)
+        "few" -> listOf(0xFF6BAFD8, 0xFF97C8E6, 0xFFC9E3F4)
+        "cloudy" -> listOf(0xFF7EA6BF, 0xFFA3C0D2, 0xFFD2E1EB)
+        "rain" -> listOf(0xFF6E8FA6, 0xFF8FAEBF, 0xFFC0D3DF)
+        "snow" -> listOf(0xFF87A6BC, 0xFFAFC6D6, 0xFFE2EDF4)
+        "storm" -> listOf(0xFF5C7386, 0xFF7D94A5, 0xFFB4C5D0)
+        else -> listOf(0xFF7EA6BF, 0xFFA3C0D2, 0xFFD2E1EB)
     }
     val night = when (group) {
-        "clear" -> listOf(0xFF0B1420, 0xFF132132, 0xFF243648)
-        "rain" -> listOf(0xFF0A1018, 0xFF141C26, 0xFF232D38)
-        "storm" -> listOf(0xFF080C12, 0xFF11161E, 0xFF1D232C)
-        else -> listOf(0xFF0B131C, 0xFF141F2B, 0xFF22303D)
+        "clear" -> listOf(0xFF16273D, 0xFF20374F, 0xFF334F6B)
+        "rain" -> listOf(0xFF141F2C, 0xFF1E2C3C, 0xFF2E4054)
+        "storm" -> listOf(0xFF101822, 0xFF19222E, 0xFF2A3543)
+        else -> listOf(0xFF152335, 0xFF1F3044, 0xFF31465C)
     }
     return (if (isDay) day else night).map { Color(it) }
 }

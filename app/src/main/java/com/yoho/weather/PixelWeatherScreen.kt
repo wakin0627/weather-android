@@ -89,8 +89,8 @@ fun PixelSky(group: String, isDay: Boolean, cloud: Int, warm: Float) {
         }
 
         // 太阳 / 月亮：像素方块 + 十字光芒
-        val sx = w * 0.72f
-        val sy = if (isDay) h * 0.16f else h * 0.13f
+        val sx = w * 0.84f
+        val sy = if (isDay) h * 0.055f else h * 0.05f
         val sunColor = if (isDay) Color(0xFFD8A85A) else Color(0xFFDCE6F2)
         fun block(x: Float, y: Float, n: Int = 1, c: Color = sunColor, alpha: Float = 1f) {
             drawRect(c.copy(alpha = alpha), Offset(x, y), Size(cell * n, cell * n))
@@ -175,7 +175,8 @@ fun PixelWeatherScreen(
         }
     }
 
-    Box(Modifier.fillMaxSize().background(Color(0xFF08111A))) {
+    Px.apply(isDay)
+    Box(Modifier.fillMaxSize()) {
         PixelSky(group, isDay, now?.cloud ?: 30, warm)
 
         LazyColumn(
@@ -189,7 +190,7 @@ fun PixelWeatherScreen(
                     Spacer(Modifier.weight(1f))
                     Text(
                         "更新 ${now?.time?.takeLast(5) ?: "--:--"}",
-                        color = PxTextDim, fontSize = 10.sp, fontFamily = PixelFont
+                        color = Px.dim, fontSize = 10.sp, fontFamily = PixelFont
                     )
                     Spacer(Modifier.width(8.dp))
                     PixelPill(if (loading) "…" else "刷新", filled = loading) { onRefresh() }
@@ -202,11 +203,11 @@ fun PixelWeatherScreen(
                     Modifier.fillMaxWidth().padding(top = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    PixelGlyph(pixelIconOf(group, isDay), PxText, 40.dp)
+                    PixelGlyph(pixelIconOf(group, isDay), Px.ink, 40.dp)
                     Spacer(Modifier.height(6.dp))
                     Text(
                         data?.place?.city?.ifEmpty { cityName } ?: cityName,
-                        color = PxText, fontSize = 18.sp, fontFamily = PixelFont
+                        color = Px.ink, fontSize = 18.sp, fontFamily = PixelFont
                     )
                     Text(
                         buildString {
@@ -215,27 +216,27 @@ fun PixelWeatherScreen(
                                 if (p.township.isNotEmpty()) { if (isNotEmpty()) append(" · "); append(p.township) }
                             }
                         }.ifEmpty { error ?: "读取中" },
-                        color = PxTextDim, fontSize = 10.sp, fontFamily = PixelFont,
+                        color = Px.dim, fontSize = 10.sp, fontFamily = PixelFont,
                         modifier = Modifier.padding(top = 2.dp)
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
                         if (now != null) "${now.temp}°" else "--°",
-                        color = PxText, fontSize = 56.sp, fontFamily = PixelFont, lineHeight = 60.sp
+                        color = Px.ink, fontSize = 56.sp, fontFamily = PixelFont, lineHeight = 60.sp
                     )
                     Spacer(Modifier.height(2.dp))
-                    Text(now?.text ?: "…", color = PxText, fontSize = 13.sp, fontFamily = PixelFont)
+                    Text(now?.text ?: "…", color = Px.ink, fontSize = 13.sp, fontFamily = PixelFont)
                     if (data != null) {
                         Text(
                             "最高 ${data.days.first().hi}°  最低 ${data.days.first().lo}°",
-                            color = PxTextDim, fontSize = 11.sp, fontFamily = PixelFont,
+                            color = Px.dim, fontSize = 11.sp, fontFamily = PixelFont,
                             modifier = Modifier.padding(top = 3.dp)
                         )
                     }
                     data?.air?.let { air ->
                         Spacer(Modifier.height(5.dp))
                         Row(
-                            Modifier.border(1.dp, PxBorderDim).padding(horizontal = 6.dp, vertical = 2.dp),
+                            Modifier.border(1.dp, Px.borderDim).padding(horizontal = 6.dp, vertical = 2.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             val tone = when {
@@ -246,7 +247,7 @@ fun PixelWeatherScreen(
                             }
                             Box(Modifier.size(6.dp).background(tone))
                             Spacer(Modifier.width(5.dp))
-                            Text("空气 ${air.level} ${air.aqi}", color = PxText, fontSize = 10.sp, fontFamily = PixelFont)
+                            Text("空气 ${air.level} ${air.aqi}", color = Px.ink, fontSize = 10.sp, fontFamily = PixelFont)
                         }
                     }
                 }
@@ -259,36 +260,40 @@ fun PixelWeatherScreen(
                     val next3 = data.hours.take(3)
                     val soon = next3.any { it.pop >= 40 }
                     Row(
-                        Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                        Modifier
+                            .fillMaxWidth()
+                            .background(Px.panel)
+                            .border(1.dp, Px.border)
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        PixelGlyph(if (soon) "umbrella" else "sun", PxAccent, 14.dp)
+                        PixelGlyph(if (soon) "umbrella" else "sun", Px.accent, 14.dp)
                         Spacer(Modifier.width(6.dp))
                         Text(
                             if (soon) "未来 2 小时可能有雨，带伞" else "未来 2 小时内无降雨",
-                            color = PxText, fontSize = 11.sp, fontFamily = PixelFont
+                            color = Px.ink, fontSize = 11.sp, fontFamily = PixelFont
                         )
                     }
                 }
 
                 // 生活指南
                 item {
-                    PixelCard(accent = PxBorderDim) {
+                    PixelCard(accent = Px.borderDim) {
                         PixelLabel("生活指南", "全部 >", onOpenAdvice)
                         data.advice.take(2).forEach { a ->
                             Row(Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                                PixelGlyph(glyphOf(a.icon, a.title), PxAccent, 16.dp)
+                                PixelGlyph(glyphOf(a.icon, a.title), Px.accent, 16.dp)
                                 Spacer(Modifier.width(8.dp))
                                 Column {
-                                    Text(a.title, color = PxText, fontSize = 12.sp, fontFamily = PixelFont)
-                                    Text(a.sub, color = PxTextDim, fontSize = 10.sp, fontFamily = PixelFont)
+                                    Text(a.title, color = Px.ink, fontSize = 12.sp, fontFamily = PixelFont)
+                                    Text(a.sub, color = Px.dim, fontSize = 10.sp, fontFamily = PixelFont)
                                 }
                             }
                         }
                         PixelDivider()
                         Text(
                             "湿度 ${now?.humidity ?: 0}%  能见度 ${now?.visibility ?: 0}km  气压 ${now?.pressure ?: 0}hPa",
-                            color = PxTextDim, fontSize = 10.sp, fontFamily = PixelFont,
+                            color = Px.dim, fontSize = 10.sp, fontFamily = PixelFont,
                             modifier = Modifier.padding(top = 5.dp)
                         )
                     }
@@ -303,24 +308,24 @@ fun PixelWeatherScreen(
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text(
                                         if (i == 0) "现在" else h.t.takeLast(5).take(2) + "时",
-                                        color = PxTextDim, fontSize = 9.sp, fontFamily = PixelFont
+                                        color = Px.dim, fontSize = 10.sp, fontFamily = PixelFont
                                     )
                                     Spacer(Modifier.height(4.dp))
-                                    PixelGlyph(pixelIconOf(h.icon.let { iconGroup(it) }, isDay), PxText, 16.dp)
+                                    PixelGlyph(pixelIconOf(h.icon.let { iconGroup(it) }, isDay), Px.ink, 16.dp)
                                     Spacer(Modifier.height(4.dp))
-                                    Text("${h.temp}°", color = PxText, fontSize = 11.sp, fontFamily = PixelFont)
+                                    Text("${h.temp}°", color = Px.ink, fontSize = 11.sp, fontFamily = PixelFont)
                                     if (h.pop >= 20) {
-                                        Text("${h.pop}%", color = PxBlue, fontSize = 8.sp, fontFamily = PixelFont)
+                                        Text("${h.pop}%", color = Px.blue, fontSize = 9.sp, fontFamily = PixelFont)
                                     }
                                 }
                             }
                             // 日落
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("日落", color = PxAccent, fontSize = 9.sp, fontFamily = PixelFont)
+                                Text("日落", color = Px.accent, fontSize = 10.sp, fontFamily = PixelFont)
                                 Spacer(Modifier.height(4.dp))
-                                PixelGlyph("sunset", PxAccent, 16.dp)
+                                PixelGlyph("sunset", Px.accent, 16.dp)
                                 Spacer(Modifier.height(4.dp))
-                                Text(now?.sunset?.take(5) ?: "--", color = PxAccent, fontSize = 9.sp, fontFamily = PixelFont)
+                                Text(now?.sunset?.take(5) ?: "--", color = Px.accent, fontSize = 10.sp, fontFamily = PixelFont)
                             }
                         }
                     }
@@ -358,19 +363,19 @@ fun PixelWeatherScreen(
                             ) {
                                 Text(
                                     dayLabel(d.date, i),
-                                    color = PxText, fontSize = 10.sp, fontFamily = PixelFont,
+                                    color = Px.ink, fontSize = 10.sp, fontFamily = PixelFont,
                                     modifier = Modifier.width(38.dp)
                                 )
                                 Text(
                                     d.date.takeLast(5).replace("-", "/"),
-                                    color = PxTextDim, fontSize = 8.sp, fontFamily = PixelFont,
+                                    color = Px.dim, fontSize = 9.sp, fontFamily = PixelFont,
                                     modifier = Modifier.width(34.dp)
                                 )
-                                PixelGlyph(pixelIconOf(iconGroup(d.icon), true), PxText, 14.dp)
+                                PixelGlyph(pixelIconOf(iconGroup(d.icon), true), Px.ink, 14.dp)
                                 Spacer(Modifier.width(6.dp))
                                 Text(
                                     "${d.lo}°",
-                                    color = PxTextDim, fontSize = 9.sp, fontFamily = PixelFont,
+                                    color = Px.dim, fontSize = 10.sp, fontFamily = PixelFont,
                                     modifier = Modifier.width(24.dp)
                                 )
                                 // 像素温度条
@@ -380,14 +385,14 @@ fun PixelWeatherScreen(
                                         Modifier
                                             .weight(((d.hi - d.lo).toFloat() / span).coerceAtLeast(0.08f))
                                             .fillMaxHeight()
-                                            .background(PxAccent.copy(alpha = 0.75f))
+                                            .background(Px.accent.copy(alpha = 0.75f))
                                     )
                                     Spacer(Modifier.weight(((hi - d.hi).toFloat() / span).coerceAtLeast(0f) + 0.01f))
                                 }
                                 Spacer(Modifier.width(6.dp))
                                 Text(
                                     "${d.hi}°",
-                                    color = PxText, fontSize = 9.sp, fontFamily = PixelFont,
+                                    color = Px.ink, fontSize = 10.sp, fontFamily = PixelFont,
                                     modifier = Modifier.width(24.dp)
                                 )
                             }
@@ -402,11 +407,11 @@ fun PixelWeatherScreen(
 @Composable
 private fun androidx.compose.foundation.layout.RowScope.PxMetric(glyph: String, label: String, value: String, note: String) {
     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-        PixelGlyph(glyph, PxTextDim, 16.dp)
+        PixelGlyph(glyph, Px.dim, 16.dp)
         Spacer(Modifier.height(4.dp))
-        Text(value, color = PxText, fontSize = 14.sp, fontFamily = PixelFont)
-        Text(label, color = PxTextDim, fontSize = 9.sp, fontFamily = PixelFont)
-        Text(note, color = PxTextDim.copy(alpha = 0.7f), fontSize = 8.sp, fontFamily = PixelFont)
+        Text(value, color = Px.ink, fontSize = 14.sp, fontFamily = PixelFont)
+        Text(label, color = Px.dim, fontSize = 10.sp, fontFamily = PixelFont)
+        Text(note, color = Px.dim.copy(alpha = 0.7f), fontSize = 9.sp, fontFamily = PixelFont)
     }
 }
 
