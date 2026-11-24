@@ -205,7 +205,7 @@ private fun App() {
     Box(Modifier.fillMaxSize().background(Color(0xFF0A0F16))) {
       Box(Modifier.fillMaxSize().hazeSource(hazeState)) {
         when (tab) {
-            0 -> PixelWeatherScreen(
+            0 -> WeatherV2Screen(
                 data = data,
                 loading = loading,
                 error = error,
@@ -229,7 +229,7 @@ private fun App() {
       }
 
         Box(Modifier.align(Alignment.BottomCenter)) {
-            PixelBar(tab) { tab = it }
+            LnBar(tab) { tab = it }
         }
 
         if (showAdvice && data != null) {
