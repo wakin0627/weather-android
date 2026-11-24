@@ -205,16 +205,15 @@ private fun App() {
     Box(Modifier.fillMaxSize().background(Color(0xFF0A0F16))) {
       Box(Modifier.fillMaxSize().hazeSource(hazeState)) {
         when (tab) {
-            0 -> WeatherScreen(
+            0 -> PixelWeatherScreen(
                 data = data,
                 loading = loading,
                 error = error,
-                onRefresh = { refresh() },
-                onOpenDays = { if (data != null) showDays = true },
-                onToast = { toast(it) },
                 cityName = data?.place?.city?.ifEmpty { city.name } ?: city.name,
+                onRefresh = { refresh() },
                 onOpenCity = { showCity = true },
-                onOpenAdvice = { if (data != null) showAdvice = true }
+                onOpenAdvice = { if (data != null) showAdvice = true },
+                onOpenDays = { if (data != null) showDays = true }
             )
             1 -> androidx.compose.runtime.key(city.lng, city.lat) { MapScreen(city.lng, city.lat) }
             else -> MeScreen(
@@ -230,7 +229,7 @@ private fun App() {
       }
 
         Box(Modifier.align(Alignment.BottomCenter)) {
-            LiquidGlassBar(tab, hazeState) { tab = it }
+            PixelBar(tab) { tab = it }
         }
 
         if (showAdvice && data != null) {
