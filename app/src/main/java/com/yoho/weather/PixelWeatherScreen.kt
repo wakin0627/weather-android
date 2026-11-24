@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun PixelSky(group: String, isDay: Boolean, cloud: Int, warm: Float) {
-    val colors = skyColors(group, isDay)
+    val colors = pxSkyColors(group, isDay)
     val anim = rememberInfiniteTransition(label = "pxsky")
     val t by anim.animateFloat(
         initialValue = 0f,
@@ -42,7 +42,7 @@ fun PixelSky(group: String, isDay: Boolean, cloud: Int, warm: Float) {
         val w = size.width
         val h = size.height
         val cell = (w / 90f).coerceAtLeast(3f)   // 像素块尺寸
-        val bands = 18
+        val bands = 30
         val top = colors.first()
         val mid = colors[1]
         val bottom = colors.last()
@@ -64,7 +64,7 @@ fun PixelSky(group: String, isDay: Boolean, cloud: Int, warm: Float) {
                 val dc = lerp(if (f < 0.65f) lerp(top, mid, (f - 0.02f) / 0.65f) else c, c, 0.5f)
                 var x = if (i % 2 == 0) 0f else cell
                 while (x < w) {
-                    drawRect(dc.copy(alpha = 0.35f), Offset(x, y), Size(cell, cell))
+                    drawRect(dc.copy(alpha = 0.20f), Offset(x, y), Size(cell, cell))
                     x += cell * 2
                 }
             }
@@ -72,12 +72,12 @@ fun PixelSky(group: String, isDay: Boolean, cloud: Int, warm: Float) {
 
         // 暖光：靠近日落时底部泛橘
         if (warm > 0.02f) {
-            val warmColor = Color(0xFFFF9F43)
+            val warmColor = Color(0xFFD8A85A)
             var y = h * 0.55f
             var a = 0f
             while (y < h) {
                 a += 0.035f
-                drawRect(warmColor.copy(alpha = a * warm * 0.5f), Offset(0f, y), Size(w, h / bands))
+                drawRect(warmColor.copy(alpha = a * warm * 0.22f), Offset(0f, y), Size(w, h / bands))
                 y += h / bands
             }
         }
@@ -85,22 +85,22 @@ fun PixelSky(group: String, isDay: Boolean, cloud: Int, warm: Float) {
         // 太阳 / 月亮：像素方块 + 十字光芒
         val sx = w * 0.72f
         val sy = if (isDay) h * 0.16f else h * 0.13f
-        val sunColor = if (isDay) Color(0xFFFFD479) else Color(0xFFE7F0FF)
+        val sunColor = if (isDay) Color(0xFFD8A85A) else Color(0xFFDCE6F2)
         fun block(x: Float, y: Float, n: Int = 1, c: Color = sunColor, alpha: Float = 1f) {
             drawRect(c.copy(alpha = alpha), Offset(x, y), Size(cell * n, cell * n))
         }
         if (isDay) {
             block(sx, sy, 5)
-            block(sx + cell, sy - cell, 3, Color(0xFFFFE29B))
-            block(sx - cell, sy + cell, 2, Color(0xFFFFE29B), 0.9f)
-            block(sx + cell * 5, sy + cell, 2, Color(0xFFFFE29B), 0.85f)
+            block(sx + cell, sy - cell, 3, Color(0xFFE0BC7E))
+            block(sx - cell, sy + cell, 2, Color(0xFFE0BC7E), 0.9f)
+            block(sx + cell * 5, sy + cell, 2, Color(0xFFE0BC7E), 0.85f)
             for (i in 1..3) {
-                block(sx + cell * 2, sy - cell * (i + 1) - cell, 1, Color(0xFFFFE29B), 0.55f - i * 0.12f)
-                block(sx + cell * 2, sy + cell * 6 + (i - 1) * cell, 1, Color(0xFFFFE29B), 0.5f - i * 0.12f)
-                block(sx + cell * 6 + (i - 1) * cell, sy + cell * 2, 1, Color(0xFFFFE29B), 0.5f - i * 0.12f)
+                block(sx + cell * 2, sy - cell * (i + 1) - cell, 1, Color(0xFFE0BC7E), 0.55f - i * 0.12f)
+                block(sx + cell * 2, sy + cell * 6 + (i - 1) * cell, 1, Color(0xFFE0BC7E), 0.5f - i * 0.12f)
+                block(sx + cell * 6 + (i - 1) * cell, sy + cell * 2, 1, Color(0xFFE0BC7E), 0.5f - i * 0.12f)
             }
         } else {
-            block(sx, sy, 5, Color(0xFFE7F0FF))
+            block(sx, sy, 5, Color(0xFFDCE6F2))
             block(sx + cell * 3, sy + cell, 2, Color(0xFF0A121A))
             block(sx + cell, sy + cell * 3, 2, Color(0xFF0A121A))
             // 星星
@@ -233,10 +233,10 @@ fun PixelWeatherScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             val tone = when {
-                                air.aqi <= 50 -> Color(0xFF7BE495)
-                                air.aqi <= 100 -> Color(0xFFFFD479)
-                                air.aqi <= 150 -> Color(0xFFFFA45C)
-                                else -> Color(0xFFFF7B7B)
+                                air.aqi <= 50 -> Color(0xFF93B49C)
+                                air.aqi <= 100 -> Color(0xFFC9B27A)
+                                air.aqi <= 150 -> Color(0xFFBE9070)
+                                else -> Color(0xFFB87A76)
                             }
                             Box(Modifier.size(6.dp).background(tone))
                             Spacer(Modifier.width(5.dp))
@@ -374,7 +374,7 @@ fun PixelWeatherScreen(
                                         Modifier
                                             .weight(((d.hi - d.lo).toFloat() / span).coerceAtLeast(0.08f))
                                             .fillMaxHeight()
-                                            .background(Brush.horizontalGradient(listOf(PxBlue, PxAccent)))
+                                            .background(PxAccent.copy(alpha = 0.75f))
                                     )
                                     Spacer(Modifier.weight(((hi - d.hi).toFloat() / span).coerceAtLeast(0f) + 0.01f))
                                 }

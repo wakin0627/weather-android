@@ -24,14 +24,14 @@ import androidx.compose.ui.unit.sp
 val PixelFont = FontFamily(Font(R.font.ark_pixel))
 
 // 像素风调色板：深底 + 荧光描边，拒绝圆角与模糊
-val PxPanel = Color(0xF2101A24)
-val PxPanelDeep = Color(0xE60A121A)
-val PxBorder = Color(0xFF7FD4FF)
-val PxBorderDim = Color(0x66A8C6DD)
-val PxText = Color(0xFFEAF4FF)
-val PxTextDim = Color(0xD8C6D8E8)
-val PxAccent = Color(0xFFFFD479)
-val PxBlue = Color(0xFF6EC6FF)
+val PxPanel = Color(0xF215212C)
+val PxPanelDeep = Color(0xF20E1721)
+val PxBorder = Color(0xFF3A4E62)
+val PxBorderDim = Color(0x803A4E62)
+val PxText = Color(0xFFE4ECF4)
+val PxTextDim = Color(0xFF8FA3B6)
+val PxAccent = Color(0xFFD8A85A)
+val PxBlue = Color(0xFF6E9DBF)
 
 /** 像素卡片：直角 + 1px 描边 + 内侧投影线，经典 8-bit 面板 */
 @Composable
@@ -118,11 +118,11 @@ fun PixelGlyph(kind: String, tint: Color, size: Dp = 18.dp) {
         }
         when (kind) {
             "sun" -> {
-                px(7, 7, 2, 2, Color(0xFFFFD479))
-                px(6, 6, 4, 1, Color(0xFFFFE29B))
-                px(6, 9, 4, 1, Color(0xFFFFE29B))
-                px(5, 7, 1, 2, Color(0xFFFFE29B))
-                px(10, 7, 1, 2, Color(0xFFFFE29B))
+                px(7, 7, 2, 2, PxAccent)
+                px(6, 6, 4, 1, PxAccent.copy(alpha = 0.62f))
+                px(6, 9, 4, 1, PxAccent.copy(alpha = 0.62f))
+                px(5, 7, 1, 2, PxAccent.copy(alpha = 0.62f))
+                px(10, 7, 1, 2, PxAccent.copy(alpha = 0.62f))
                 px(7, 3, 2, 1)
                 px(7, 12, 2, 1)
                 px(3, 7, 1, 2)
@@ -138,9 +138,9 @@ fun PixelGlyph(kind: String, tint: Color, size: Dp = 18.dp) {
             "rain" -> {
                 px(4, 7, 8, 3, Color(0xFFDCE9F5))
                 px(5, 5, 4, 2, Color(0xFFEDF6FF))
-                px(5, 11, 1, 3, Color(0xFF6EC6FF))
-                px(8, 11, 1, 4, Color(0xFF6EC6FF))
-                px(11, 11, 1, 3, Color(0xFF6EC6FF))
+                px(5, 11, 1, 3, PxBlue)
+                px(8, 11, 1, 4, PxBlue)
+                px(11, 11, 1, 3, PxBlue)
             }
             "snow" -> {
                 px(4, 7, 8, 3, Color(0xFFDCE9F5))
@@ -149,10 +149,10 @@ fun PixelGlyph(kind: String, tint: Color, size: Dp = 18.dp) {
             }
             "storm" -> {
                 px(4, 6, 8, 3, Color(0xFFB9C9D8))
-                px(7, 9, 2, 3, Color(0xFFFFD479))
-                px(6, 12, 2, 2, Color(0xFFFFD479))
-                px(5, 9, 1, 2, Color(0xFF6EC6FF))
-                px(11, 9, 1, 3, Color(0xFF6EC6FF))
+                px(7, 9, 2, 3, PxAccent)
+                px(6, 12, 2, 2, PxAccent)
+                px(5, 9, 1, 2, PxBlue)
+                px(11, 9, 1, 3, PxBlue)
             }
             "fog" -> {
                 px(3, 5, 10, 1, Color(0xFFDCE9F5))
@@ -252,7 +252,7 @@ fun PixelBar(tab: Int, onTab: (Int) -> Unit) {
                     Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .background(if (on) Color(0xFF1B3A52) else Color.Transparent)
+                        .background(if (on) Color(0xFF1E2A36) else Color.Transparent)
                         .clickable { onTab(i) },
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
@@ -269,4 +269,25 @@ fun PixelBar(tab: Int, onTab: (Int) -> Unit) {
             }
         }
     }
+}
+
+
+/** 像素天空配色：低饱和、三阶以内，避免多色打架 */
+fun pxSkyColors(group: String, isDay: Boolean): List<Color> {
+    val day = when (group) {
+        "clear" -> listOf(0xFF2C4A66, 0xFF44688A, 0xFF7FA0B8)
+        "few" -> listOf(0xFF334F6A, 0xFF4E7188, 0xFF89A6BC)
+        "cloudy" -> listOf(0xFF3B5163, 0xFF56707F, 0xFF93A5B2)
+        "rain" -> listOf(0xFF324656, 0xFF48606F, 0xFF7C8F9B)
+        "snow" -> listOf(0xFF3D5566, 0xFF5E7688, 0xFFA6B6C2)
+        "storm" -> listOf(0xFF28323D, 0xFF3C4956, 0xFF65727E)
+        else -> listOf(0xFF3B5163, 0xFF56707F, 0xFF93A5B2)
+    }
+    val night = when (group) {
+        "clear" -> listOf(0xFF0B1420, 0xFF132132, 0xFF243648)
+        "rain" -> listOf(0xFF0A1018, 0xFF141C26, 0xFF232D38)
+        "storm" -> listOf(0xFF080C12, 0xFF11161E, 0xFF1D232C)
+        else -> listOf(0xFF0B131C, 0xFF141F2B, 0xFF22303D)
+    }
+    return (if (isDay) day else night).map { Color(it) }
 }
